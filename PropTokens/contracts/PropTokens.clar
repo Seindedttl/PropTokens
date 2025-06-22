@@ -311,4 +311,33 @@
   (map-get? listings { listing-id: listing-id })
 )
 
+;; Advanced portfolio analytics function for asset holders
+(define-public (calculate-portfolio-value (holder principal) (asset-ids (list 50 uint)))
+  (begin
+    ;; Set the current holder for the helper functions to use
+    (var-set current-portfolio-holder holder)
+    
+    (let ((portfolio-values (map calculate-single-asset-value asset-ids))
+          (total-value (sum-values portfolio-values))
+          (asset-count (len asset-ids))
+          (holdings (map get-single-detailed-holding asset-ids))
+          (positive-values (filter is-positive portfolio-values))
+          (positive-count (len positive-values)))
+      (ok {
+        total-value: total-value,
+        asset-count: asset-count,
+        average-value: (if (> asset-count u0) (/ total-value asset-count) u0),
+        holdings: holdings,
+        portfolio-diversity: (if (> asset-count u0) 
+                              (/ (* positive-count u100) asset-count)
+                              u0),
+        largest-holding: (fold get-max portfolio-values u0),
+        smallest-holding: (if (> positive-count u0)
+                            (fold get-min positive-values u999999999)
+                            u0)
+      })
+    )
+  )
+)
+
 
